@@ -6,13 +6,16 @@ import (
 )
 
 type RegisterUserUsecase struct {
-	userRepository domainports.IUserRepository
+	userRepository       domainports.IUserRepository
+	userEventsRepository domainports.IUserEventsRepository
 }
 
 func NewRegisterUserUsecase(
 	userRepository domainports.IUserRepository,
+	userEventsRepository domainports.IUserEventsRepository,
 ) applicationports.IRegisterUser {
 	return &RegisterUserUsecase{
-		userRepository: userRepository,
+		userRepository:       userRepository,
+		userEventsRepository: userEventsRepository,
 	}
 }

@@ -13,7 +13,7 @@ func seedCategories(db *gorm.DB) {
 		{ID: 1, Name: "💵 Salario", Color: "#FF5733", Type: "income"},
 
 		// Gastos
-
+		//FIXME: [DEPRECATED]
 		{ID: 2, Name: "🚕 Transporte", Color: "#33FF57", Type: "expense"},
 		{ID: 3, Name: "🍔 Comida", Color: "#3357FF", Type: "expense"},
 		{ID: 4, Name: "🏠 Alquiler", Color: "#FF33A1", Type: "expense"},

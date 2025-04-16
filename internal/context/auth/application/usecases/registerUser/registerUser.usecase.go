@@ -5,6 +5,7 @@ import (
 
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/application/usecases/registerUser/dtos"
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/domain/entities"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/domain/services"
 	uservalueobjects "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/domain/valueObjects/user"
 	valueobjects "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/domain/valueObjects"
 )
@@ -28,6 +29,8 @@ func (usecase *RegisterUserUsecase) RegisterUser(ctx context.Context, params *dt
 	if err != nil {
 		return 0, err
 	}
+
+	go services.UserCreated(id, usecase.userEventsRepository)
 
 	return id, nil
 }

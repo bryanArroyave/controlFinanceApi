@@ -7,17 +7,18 @@ import (
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/entities"
 )
 
-func (s *CategoryAdapter) SaveCategory(ctx context.Context, category *entities.Category) (int, error) {
+func (s *CategoryAdapter) SaveCategory(ctx context.Context, userID int, category *entities.Category) (int, error) {
 	conn, err := s.dbManager.GetConnection()
 	if err != nil {
 		return 0, err
 	}
 
 	categoryPrimitive := category.ToPrimitives()
-
+	userIDUint := uint(userID)
 	categoryModel := &models.Category{
 		ID:     categoryPrimitive.ID,
 		Name:   categoryPrimitive.Name,
+		UserID: &userIDUint,
 		Color:  categoryPrimitive.Color,
 		Type:   categoryPrimitive.Type,
 		Budget: float64(categoryPrimitive.Budget),

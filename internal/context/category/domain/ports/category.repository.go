@@ -7,6 +7,6 @@ import (
 )
 
 type ICategoryRepository interface {
-	SaveCategory(ctx context.Context, category *entities.Category) (int, error)
+	SaveCategory(ctx context.Context, userID int, category *entities.Category) (int, error)
 	SaveSubcategory(ctx context.Context, subcategory *entities.Subcategory) (int, error)
 }

@@ -22,7 +22,7 @@ func (usecase *SaveCategoryUsecase) SaveCategory(ctx context.Context, userID int
 		return 0, err
 	}
 	category.SetID(valueobjects.NewID(params.ID))
-	id, err := usecase.categoryRepository.SaveCategory(ctx, category)
+	id, err := usecase.categoryRepository.SaveCategory(ctx, userID, category)
 
 	if err != nil {
 		return 0, err

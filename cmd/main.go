@@ -7,7 +7,6 @@ import (
 	"github.com/bryanArroyave/eventsplit/back/user-service/infra/config"
 	"github.com/bryanArroyave/eventsplit/back/user-service/infra/migrations"
 	infraports "github.com/bryanArroyave/eventsplit/back/user-service/infra/ports"
-	"github.com/bryanArroyave/eventsplit/back/user-service/infra/seeds"
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth"
 	userports "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/domain/ports"
 	adapters "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/infra/adapters/postgres"
@@ -16,12 +15,18 @@ import (
 	categoryports "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/ports"
 	categoryadapters "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/infra/adapters/postgres"
 	categoryhandlers "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/infra/handlers"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/infra/subscribers"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/infra/auth/adapters/events"
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/infra/auth/middlewares"
 	"github.com/bryanArroyave/golang-utils/app"
 	appdtos "github.com/bryanArroyave/golang-utils/app/dtos"
+	eventbroker "github.com/bryanArroyave/golang-utils/events/adapter/eventBroker"
+	routerbroker "github.com/bryanArroyave/golang-utils/events/adapter/routerBroker"
+	"github.com/bryanArroyave/golang-utils/events/enums"
+	"github.com/bryanArroyave/golang-utils/events/factory"
 	postgresdtos "github.com/bryanArroyave/golang-utils/gorm/dtos"
 	utilsports "github.com/bryanArroyave/golang-utils/gorm/ports"
-	"github.com/bryanArroyave/golang-utils/logger/enums"
+	loggerenums "github.com/bryanArroyave/golang-utils/logger/enums"
 	"github.com/bryanArroyave/golang-utils/server"
 	serverdtos "github.com/bryanArroyave/golang-utils/server/dtos"
 	"go.uber.org/fx"
@@ -30,10 +35,11 @@ import (
 type Params struct {
 	fx.In
 
-	Lc       fx.Lifecycle
-	App      *app.App
-	Server   *server.APIRestServer
-	Handlers []infraports.IHttpHandler `group:"handlers"`
+	Lc                 fx.Lifecycle
+	App                *app.App
+	Server             *server.APIRestServer
+	Handlers           []infraports.IHttpHandler       `group:"handlers"`
+	SubscriberHandlers []infraports.ISubscriberHandler `group:"subscriber_handlers"`
 }
 
 func main() {
@@ -46,9 +52,12 @@ func main() {
 	}
 
 	fx.New(
-
 		fx.Provide(
 			context.Background,
+
+			func(app *app.App) userports.IUserEventsRepository {
+				return events.NewDomainEventAdapter(app.GetMessageBroker("domainBroker").Publisher)
+			},
 			func(app *app.App) categoryports.ICategoryRepository {
 				return categoryadapters.NewCategoryAdapter(app.GetPostgresConnection("financial"))
 			},
@@ -69,7 +78,7 @@ func main() {
 			server.NewAPIRestServer,
 			func() *appdtos.LoggerConfigDTO {
 				return &appdtos.LoggerConfigDTO{
-					LoggerType:  enums.Zerolog,
+					LoggerType:  loggerenums.Zerolog,
 					ServiceName: os.Getenv("SERVICE_NAME"),
 				}
 			},
@@ -80,6 +89,11 @@ func main() {
 					Env:        os.Getenv("ENV"),
 					MaxRetries: 3,
 				})
+				_app.AddMessageBroker("domainBroker", enums.Channels, &factory.FactoryConfig{
+					GoChannel: &eventbroker.GoChannelConfig{
+						BufferSize: 100,
+					},
+				})
 
 				return _app
 			},
@@ -87,6 +101,7 @@ func main() {
 				return app.GetPostgresConnection("financial")
 			},
 		),
+		subscribers.CategorySubscriberModule,
 		auth.UsecasesModule,
 		authhandlers.AuthModule,
 		category.UsecasesModule,
@@ -107,14 +122,23 @@ func setLifeCycle(p Params) {
 				return err
 			}
 
-			seed := seeds.NewControlFinancialSeed(p.App.GetPostgresConnection("financial"))
-			seed.Exec()
-
 			p.Server.GetPrivateGroup().Use(middlewares.SessionCookie)
 
 			for _, h := range p.Handlers {
 				h.RegisterRoutes(p.Server.GetPublicGroup(), p.Server.GetPrivateGroup())
 			}
+
+			router := routerbroker.NewRouter()
+			for _, h := range p.SubscriberHandlers {
+				s := p.App.GetMessageBroker("domainBroker")
+				h.RegisterRoutes(router, s.Subscriber)
+			}
+
+			go func() {
+				if err := router.Run(context.Background()); err != nil {
+					panic(err)
+				}
+			}()
 
 			go func() {
 				p.Server.RunServer()
