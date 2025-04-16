@@ -7,7 +7,7 @@ import (
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/entities"
 )
 
-func (s *CategoryAdapter) CreateCategory(ctx context.Context, category *entities.Category) (int, error) {
+func (s *CategoryAdapter) SaveCategory(ctx context.Context, category *entities.Category) (int, error) {
 	conn, err := s.dbManager.GetConnection()
 	if err != nil {
 		return 0, err
@@ -31,7 +31,7 @@ func (s *CategoryAdapter) CreateCategory(ctx context.Context, category *entities
 	return int(categoryModel.ID), nil
 }
 
-func (s *CategoryAdapter) CreateSubcategory(ctx context.Context, category *entities.Subcategory) (int, error) {
+func (s *CategoryAdapter) SaveSubcategory(ctx context.Context, category *entities.Subcategory) (int, error) {
 	conn, err := s.dbManager.GetConnection()
 	if err != nil {
 		return 0, err

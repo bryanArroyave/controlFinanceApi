@@ -2,16 +2,21 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
+	"github.com/bryanArroyave/eventsplit/back/user-service/infra/config"
 	"github.com/bryanArroyave/eventsplit/back/user-service/infra/migrations"
 	infraports "github.com/bryanArroyave/eventsplit/back/user-service/infra/ports"
 	"github.com/bryanArroyave/eventsplit/back/user-service/infra/seeds"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth"
+	userports "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/domain/ports"
+	adapters "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/infra/adapters/postgres"
+	authhandlers "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/auth/infra/handlers"
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category"
-	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/ports"
+	categoryports "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/ports"
 	categoryadapters "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/infra/adapters/postgres"
 	categoryhandlers "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/infra/handlers"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/infra/auth/middlewares"
 	"github.com/bryanArroyave/golang-utils/app"
 	appdtos "github.com/bryanArroyave/golang-utils/app/dtos"
 	postgresdtos "github.com/bryanArroyave/golang-utils/gorm/dtos"
@@ -19,7 +24,6 @@ import (
 	"github.com/bryanArroyave/golang-utils/logger/enums"
 	"github.com/bryanArroyave/golang-utils/server"
 	serverdtos "github.com/bryanArroyave/golang-utils/server/dtos"
-	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 )
 
@@ -34,14 +38,7 @@ type Params struct {
 
 func main() {
 
-	err := godotenv.Load()
-
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("1", os.Getenv("GITHUB_CLIENT_ID"))
-	fmt.Println("1", os.Getenv("GITHUB_CLIENT_SECRET"))
+	config.LoadEnvironmentVariables(os.Getenv("ENV"))
 
 	serverConfig := &serverdtos.APIRestServerConfigDTO{
 		GlobalPrefix: "",
@@ -52,11 +49,18 @@ func main() {
 
 		fx.Provide(
 			context.Background,
-			func(app *app.App) ports.ICategoryRepository {
+			func(app *app.App) categoryports.ICategoryRepository {
 				return categoryadapters.NewCategoryAdapter(app.GetPostgresConnection("financial"))
 			},
-			func(app *app.App) ports.ICategoryService {
+			func(app *app.App) categoryports.ICategoryService {
 				return categoryadapters.NewCategoryAdapter(app.GetPostgresConnection("financial"))
+			},
+
+			func(app *app.App) userports.IUserService {
+				return adapters.NewUserAdapter(app.GetPostgresConnection("financial"))
+			},
+			func(app *app.App) userports.IUserRepository {
+				return adapters.NewUserAdapter(app.GetPostgresConnection("financial"))
 			},
 			func(app *app.App) *serverdtos.APIRestServerConfigDTO {
 				serverConfig.App = app
@@ -83,8 +87,8 @@ func main() {
 				return app.GetPostgresConnection("financial")
 			},
 		),
-		// user.UsecasesModule,
-		// userhandlers.UserModule,
+		auth.UsecasesModule,
+		authhandlers.AuthModule,
 		category.UsecasesModule,
 		categoryhandlers.CategoryModule,
 		fx.Invoke(
@@ -106,8 +110,10 @@ func setLifeCycle(p Params) {
 			seed := seeds.NewControlFinancialSeed(p.App.GetPostgresConnection("financial"))
 			seed.Exec()
 
+			p.Server.GetPrivateGroup().Use(middlewares.SessionCookie)
+
 			for _, h := range p.Handlers {
-				h.RegisterRoutes(p.Server.GetEchoInstance())
+				h.RegisterRoutes(p.Server.GetPublicGroup(), p.Server.GetPrivateGroup())
 			}
 
 			go func() {

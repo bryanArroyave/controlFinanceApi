@@ -5,9 +5,11 @@ import "time"
 type User struct {
 	ID       uint `gorm:"primaryKey"`
 	Name     string
-	IDNumber string `gorm:"column:identification_number"`
-	Email    string
-	Phone    string
+	Email    string `gorm:"uniqueIndex"`
+	Token    string
+	Password string `gorm:"default:null"`
+	Provider string // google, github, email
+	Img      string `gorm:"default:null"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

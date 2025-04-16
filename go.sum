@@ -2,6 +2,8 @@ cloud.google.com/go/compute/metadata v0.3.0 h1:Tz+eQXMEqDIKRsmY3cHTL6FVaynIjX2Qx
 cloud.google.com/go/compute/metadata v0.3.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
 github.com/bryanArroyave/golang-utils v0.0.8 h1:18bggLs5zaMgJZ2RQPxmB/Rnzy/gJNIa2+GVDPfkNtE=
 github.com/bryanArroyave/golang-utils v0.0.8/go.mod h1:Q6GgrfF0TNaIdnvFFFzCkfPrM+7g0k/i5xps6dbWVLk=
+github.com/bryanArroyave/golang-utils v0.0.9 h1:3P3Es2OYEvYE1AD84smJICZ38FoVYSyVqpAm4LSbCW0=
+github.com/bryanArroyave/golang-utils v0.0.9/go.mod h1:Q6GgrfF0TNaIdnvFFFzCkfPrM+7g0k/i5xps6dbWVLk=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

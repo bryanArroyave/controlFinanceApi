@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/dtos"
-	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/entities/utils"
 	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/category/domain/valueObjects/subcategory"
+	"github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/domain/utils"
 	valueobjects "github.com/bryanArroyave/eventsplit/back/user-service/internal/context/shared/domain/valueObjects"
 )
 

@@ -7,10 +7,6 @@ import (
 )
 
 type ICategoryRepository interface {
-	CreateCategory(ctx context.Context, category *entities.Category) (int, error)
-	CreateSubcategory(ctx context.Context, subcategory *entities.Subcategory) (int, error)
-	// UpdateCategory(ctx context.Context, category *entities.Category) error
-	// DeleteCategory(ctx context.Context, categoryID string) error
-	// GetCategoryByID(ctx context.Context, categoryID string) (*entities.Category, error)
-	// GetCategoriesByUser(ctx context.Context, userID string) ([]*entities.Category, error)
+	SaveCategory(ctx context.Context, category *entities.Category) (int, error)
+	SaveSubcategory(ctx context.Context, subcategory *entities.Subcategory) (int, error)
 }
